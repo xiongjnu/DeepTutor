@@ -332,7 +332,6 @@ from deeptutor.api.routers import (
     skills,
     subagents,
     system,
-    tutorbot,
     unified_ws,
     vision_solver,
     voice,
@@ -440,9 +439,6 @@ app.include_router(
 # Custom routers for MathNet integration
 app.include_router(
     vision_solver.router, prefix="/api/v1", tags=["vision-solver"], dependencies=_auth
-)
-app.include_router(
-    tutorbot.router, prefix="/api/v1/tutorbot", tags=["tutorbot"], dependencies=_auth
 )
 app.include_router(
     mathnet_video.router, prefix="/api/v1/mathnet-video", tags=["mathnet-video"], dependencies=_auth
