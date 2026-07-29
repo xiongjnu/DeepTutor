@@ -7,6 +7,7 @@ Handles knowledge base CRUD operations, file uploads, and initialization.
 
 import asyncio
 from datetime import datetime
+import io
 import json
 import logging
 import mimetypes
@@ -15,6 +16,8 @@ from pathlib import Path
 import re
 import shutil
 import traceback
+import tempfile
+import zipfile
 from uuid import uuid4
 
 from fastapi import (
@@ -2887,3 +2890,129 @@ async def sync_folder(kb_name: str, folder_id: str, background_tasks: Background
         raise HTTPException(status_code=404, detail=f"Knowledge base '{kb_name}' not found")
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+class SyncMathNetRequest(BaseModel):
+    cloud_url: str | None = None
+
+
+@router.post("/sync-mathnet")
+async def sync_mathnet_knowledge_base(
+    background_tasks: BackgroundTasks,
+    req: SyncMathNetRequest | None = None,
+):
+    """Sync MathNet knowledge base data from cloud server."""
+    try:
+        cloud_url = ""
+        if req and req.cloud_url:
+            cloud_url = req.cloud_url
+        else:
+            cloud_url = os.environ.get("MATHNET_CLOUD_URL", "")
+
+        if not cloud_url:
+            raise HTTPException(
+                status_code=400,
+                detail="请配置云端服务器地址。可通过请求体 cloud_url 或环境变量 MATHNET_CLOUD_URL 设置。",
+            )
+
+        cloud_url = cloud_url.rstrip("/")
+        zip_url = f"{cloud_url}/api/export/deeptutor-zip"
+
+        import httpx
+
+        logger.info(f"正在从云端下载 Markdown 数据: {zip_url}")
+        transport = httpx.AsyncHTTPTransport(retries=0, http2=False)
+        async with httpx.AsyncClient(transport=transport, timeout=120) as client:
+            response = await client.get(zip_url)
+            if response.status_code != 200:
+                raise HTTPException(
+                    status_code=502,
+                    detail=f"云端导出失败 (HTTP {response.status_code})，请检查服务器地址是否正确。",
+                )
+
+        zip_data = response.content
+
+        temp_dir_path = Path(tempfile.mkdtemp(prefix="mathnet_sync_"))
+        try:
+            with zipfile.ZipFile(io.BytesIO(zip_data)) as zf:
+                zf.extractall(str(temp_dir_path))
+
+            md_files = sorted(temp_dir_path.glob("*.md"))
+            if not md_files:
+                raise HTTPException(status_code=400, detail="云端没有可用的 Markdown 数据。")
+
+            manager = get_kb_manager()
+            kb_base_dir = _current_kb_base_dir()
+            all_kbs = manager.list_knowledge_bases()
+            kb_name = next((name for name in all_kbs if name.lower() == "mathnet"), None) or "mathnet"
+
+            if kb_name in all_kbs:
+                logger.info(f"MathNet KB 已存在，添加 {len(md_files)} 个文件")
+                kb_path = manager.get_knowledge_base_path(kb_name)
+                raw_dir = kb_path / "raw"
+                raw_dir.mkdir(parents=True, exist_ok=True)
+
+                copied_paths = []
+                for md_file in md_files:
+                    dest = raw_dir / md_file.name
+                    shutil.copy2(str(md_file), str(dest))
+                    copied_paths.append(str(dest))
+
+                kb_entry = _load_kb_entry_or_404(manager, kb_name)
+                kb_provider = kb_entry.get("rag_provider", DEFAULT_PROVIDER)
+
+                task_id = _build_unique_task_id("kb_upload", kb_name)
+                get_task_stream_manager().ensure_task(task_id)
+
+                background_tasks.add_task(
+                    run_upload_processing_task,
+                    kb_name=kb_name,
+                    base_dir=str(kb_base_dir),
+                    uploaded_file_paths=copied_paths,
+                    task_id=task_id,
+                    rag_provider=kb_provider,
+                )
+
+                return {
+                    "message": f"MathNet 知识库同步完成，已添加 {len(copied_paths)} 个 Markdown 文件并触发重新索引。",
+                    "task_id": task_id,
+                }
+            else:
+                logger.info(f"创建 MathNet 知识库，导入 {len(md_files)} 个文件")
+
+                manager.update_kb_status(name=kb_name, status="initializing")
+
+                progress_tracker = ProgressTracker(kb_name, kb_base_dir)
+                initializer = KnowledgeBaseInitializer(
+                    kb_name=kb_name,
+                    base_dir=str(kb_base_dir),
+                    progress_tracker=progress_tracker,
+                    rag_provider=DEFAULT_PROVIDER,
+                )
+                initializer.create_directory_structure()
+
+                initializer_raw = initializer.raw_dir
+                copied = []
+                for md_file in md_files:
+                    dest = initializer_raw / md_file.name
+                    shutil.copy2(str(md_file), str(dest))
+                    copied.append(str(dest))
+
+                task_id = _build_unique_task_id("kb_init", kb_name)
+                get_task_stream_manager().ensure_task(task_id)
+
+                background_tasks.add_task(run_initialization_task, initializer, task_id)
+
+                return {
+                    "message": f"MathNet 知识库创建成功，导入 {len(copied)} 个 Markdown 文件。",
+                    "task_id": task_id,
+                }
+
+        finally:
+            shutil.rmtree(str(temp_dir_path), ignore_errors=True)
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"MathNet 同步失败: {e}")
+        raise HTTPException(status_code=500, detail=f"MathNet 同步失败: {str(e)}")

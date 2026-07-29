@@ -322,6 +322,8 @@ from deeptutor.api.routers import (
     partners,
     personas,
     plugins_api,
+    mathnet,
+    mathnet_video,
     question,
     question_notebook,
     quiz_judge,
@@ -330,7 +332,9 @@ from deeptutor.api.routers import (
     skills,
     subagents,
     system,
+    tutorbot,
     unified_ws,
+    vision_solver,
     voice,
 )
 from deeptutor.api.routers import (
@@ -431,6 +435,20 @@ app.include_router(
     prefix="/api/attachments",
     tags=["attachments"],
     dependencies=_auth,
+)
+
+# Custom routers for MathNet integration
+app.include_router(
+    vision_solver.router, prefix="/api/v1", tags=["vision-solver"], dependencies=_auth
+)
+app.include_router(
+    tutorbot.router, prefix="/api/v1/tutorbot", tags=["tutorbot"], dependencies=_auth
+)
+app.include_router(
+    mathnet_video.router, prefix="/api/v1/mathnet-video", tags=["mathnet-video"], dependencies=_auth
+)
+app.include_router(
+    mathnet.router, prefix="/api/v1/mathnet", tags=["mathnet"], dependencies=_auth
 )
 
 # Unified WebSocket endpoint — auth is checked inside the handler (WebSockets
