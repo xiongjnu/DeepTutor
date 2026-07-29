@@ -285,6 +285,7 @@ export default function KnowledgePage() {
               onOpenEngine={openEngine}
               onCreate={openCreate}
               onConnectObsidian={openObsidian}
+              onSyncMathNet={handleSyncMathNet}
             />
           ) : (
             <KnowledgeBaseDetail

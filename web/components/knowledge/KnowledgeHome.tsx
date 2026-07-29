@@ -12,6 +12,7 @@ import {
   FolderOpen,
   Network,
   Plus,
+  RefreshCw,
   Search,
   Server,
   Star,
@@ -36,6 +37,7 @@ interface KnowledgeHomeProps {
   onCreate: () => void;
   /** Open the create flow pre-set to link an Obsidian vault. */
   onConnectObsidian: () => void;
+  onSyncMathNet?: () => Promise<void>;
 }
 
 const ENGINE_ICONS: Record<string, LucideIcon> = {
@@ -101,6 +103,7 @@ export default function KnowledgeHome({
   onOpenEngine,
   onCreate,
   onConnectObsidian,
+  onSyncMathNet,
 }: KnowledgeHomeProps) {
   const { t } = useTranslation();
   const [query, setQuery] = useState("");
@@ -281,6 +284,19 @@ export default function KnowledgeHome({
                 <Plus size={14} />
                 {t("New knowledge base")}
               </button>
+              {onSyncMathNet && (
+                <button
+                  type="button"
+                  onClick={onSyncMathNet}
+                  className="mt-2 inline-flex items-center gap-1.5 rounded-lg border border-[var(--border)] bg-[var(--card)] px-3.5 py-2 text-[12.5px] font-medium text-[var(--foreground)] transition-colors hover:bg-[var(--muted)]"
+                >
+                  <RefreshCw size={14} />
+                  Sync MathNet (13k
+                  {t("+")}
+                  {" "}
+                  {t("竞赛题")})
+                </button>
+              )}
             </div>
           ) : filteredKbs.length === 0 ? (
             <div className="rounded-2xl border border-dashed border-[var(--border)] px-4 py-8 text-center text-[12px] text-[var(--muted-foreground)]">
