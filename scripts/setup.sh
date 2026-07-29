@@ -82,6 +82,31 @@ if [ ! -f ".env" ]; then
     cp .env.student .env
 fi
 
+# --- 确保 system.json 端口与 .env 一致 ---
+if [ -f ".env" ]; then
+    BP=$(grep "^BACKEND_PORT=" .env | cut -d= -f2)
+    BP=${BP:-8002}
+    mkdir -p data/user/settings
+    cat > data/user/settings/system.json <<- JSONEOF
+{
+  "version": 1,
+  "backend_port": ${BP},
+  "frontend_port": 3782,
+  "next_public_api_base_external": "",
+  "next_public_api_base": "",
+  "cors_origin": "",
+  "cors_origins": [],
+  "disable_ssl_verify": false,
+  "chat_attachment_dir": "",
+  "sandbox_allow_subprocess": true,
+  "chat_attachment_max_file_mb": 20,
+  "chat_attachment_max_total_mb": 25,
+  "chat_attachment_max_chars_per_doc": 200000,
+  "chat_attachment_max_chars_total": 150000
+}
+JSONEOF
+fi
+
 echo ""
 echo -e "${GREEN}  ✓ 安装完成！${NC}"
 echo ""
