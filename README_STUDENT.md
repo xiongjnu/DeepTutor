@@ -21,7 +21,7 @@
 ### 1. 下载代码
 
 ```bash
-git clone -b feat/merge-1.5.2 https://github.com/xiongjnu/DeepTutor.git
+git clone -b feat/mathtutor-v1.5.6 https://github.com/xiongjnu/DeepTutor.git
 cd DeepTutor
 ```
 
