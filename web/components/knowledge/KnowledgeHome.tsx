@@ -141,14 +141,26 @@ export default function KnowledgeHome({
               {t("Manage your knowledge bases and retrieval engines.")}
             </p>
           </div>
-          <button
-            type="button"
-            onClick={onCreate}
-            className="inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-[var(--primary)] px-3.5 py-2 text-[12.5px] font-medium text-[var(--primary-foreground)] transition-opacity hover:opacity-90"
-          >
-            <Plus size={14} />
-            {t("New knowledge base")}
-          </button>
+          <div className="flex shrink-0 items-center gap-2">
+            {onSyncMathNet && (
+              <button
+                type="button"
+                onClick={onSyncMathNet}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--border)] bg-[var(--card)] px-3.5 py-2 text-[12.5px] font-medium text-[var(--foreground)] transition-colors hover:bg-[var(--muted)]"
+              >
+                <RefreshCw size={14} />
+                Sync MathNet
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={onCreate}
+              className="inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-[var(--primary)] px-3.5 py-2 text-[12.5px] font-medium text-[var(--primary-foreground)] transition-opacity hover:opacity-90"
+            >
+              <Plus size={14} />
+              {t("New knowledge base")}
+            </button>
+          </div>
         </div>
 
         {/* Retrieval engines */}
@@ -284,19 +296,6 @@ export default function KnowledgeHome({
                 <Plus size={14} />
                 {t("New knowledge base")}
               </button>
-              {onSyncMathNet && (
-                <button
-                  type="button"
-                  onClick={onSyncMathNet}
-                  className="mt-2 inline-flex items-center gap-1.5 rounded-lg border border-[var(--border)] bg-[var(--card)] px-3.5 py-2 text-[12.5px] font-medium text-[var(--foreground)] transition-colors hover:bg-[var(--muted)]"
-                >
-                  <RefreshCw size={14} />
-                  Sync MathNet (13k
-                  {t("+")}
-                  {" "}
-                  {t("竞赛题")})
-                </button>
-              )}
             </div>
           ) : filteredKbs.length === 0 ? (
             <div className="rounded-2xl border border-dashed border-[var(--border)] px-4 py-8 text-center text-[12px] text-[var(--muted-foreground)]">
