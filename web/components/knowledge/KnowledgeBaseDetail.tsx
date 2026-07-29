@@ -42,6 +42,7 @@ interface KnowledgeBaseDetailProps {
   onDelete: (kbName: string) => Promise<void>;
   onClearHistory: (kbName: string) => void;
   onBack?: () => void;
+  onSyncMathNet?: () => Promise<void>;
 }
 
 const SECTIONS: {
@@ -70,6 +71,7 @@ export default function KnowledgeBaseDetail({
   onSetDefault,
   onDelete,
   onClearHistory,
+  onSyncMathNet,
   onBack,
 }: KnowledgeBaseDetailProps) {
   const { t } = useTranslation();
@@ -98,6 +100,16 @@ export default function KnowledgeBaseDetail({
           >
             {t("Create your first knowledge base")}
           </button>
+          {onSyncMathNet && (
+            <button
+              type="button"
+              onClick={onSyncMathNet}
+              className="mt-2 inline-flex items-center gap-1.5 rounded-lg border border-[var(--border)] bg-[var(--card)] px-3.5 py-1.5 text-[13px] font-medium text-[var(--foreground)] transition-colors hover:bg-[var(--muted)]"
+            >
+              <RefreshCw className="h-3.5 w-3.5" />
+              Sync MathNet (13k+ 竞赛题)
+            </button>
+          )}
         </div>
       </main>
     );

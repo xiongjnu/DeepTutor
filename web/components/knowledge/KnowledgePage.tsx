@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useTranslation } from "react-i18next";
 import { Loader2 } from "lucide-react";
 import { useKnowledgeBases } from "@/hooks/useKnowledgeBases";
-import { updateRagProviderMode } from "@/lib/knowledge-api";
+import { syncMathNet, updateRagProviderMode } from "@/lib/knowledge-api";
 import KnowledgeBaseDetail from "./KnowledgeBaseDetail";
 import KnowledgeHome from "./KnowledgeHome";
 import EngineDetail from "./EngineDetail";
@@ -195,6 +195,15 @@ export default function KnowledgePage() {
     [reindex, setError],
   );
 
+  const handleSyncMathNet = useCallback(async () => {
+    try {
+      await syncMathNet();
+      setError(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+    }
+  }, [setError]);
+
   const handleRetry = useCallback(
     async (kbName: string) => {
       try {
@@ -291,6 +300,7 @@ export default function KnowledgePage() {
               onDelete={handleDelete}
               onClearHistory={clearHistory}
               onBack={() => setView("home")}
+              onSyncMathNet={handleSyncMathNet}
             />
           )}
         </div>

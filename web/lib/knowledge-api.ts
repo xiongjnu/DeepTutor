@@ -856,3 +856,18 @@ export async function deleteKnowledgeBase(name: string): Promise<void> {
   }
   invalidateKnowledgeCaches();
 }
+
+export async function syncMathNet(): Promise<{ message: string; task_id: string }> {
+  const res = await apiFetch(apiUrl("/api/v1/knowledge/sync-mathnet"), {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({}),
+  });
+  if (!res.ok) {
+    throw new Error(
+      await readErrorDetail(res, `Sync failed (${res.status})`),
+    );
+  }
+  invalidateKnowledgeCaches();
+  return res.json();
+}
