@@ -91,7 +91,7 @@ set progress total steps to -1
 
 -- 启动后端和前端
 try
-	do shell script "cd " & quoted form of projectDir & ¬
+	do shell script "export PATH=/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin && cd " & quoted form of projectDir & ¬
 		" && source .venv/bin/activate && nohup python scripts/start_web.py > " & ¬
 		logFile & " 2>&1 &"
 on error errMsg
